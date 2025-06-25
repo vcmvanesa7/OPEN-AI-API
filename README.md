@@ -1,1 +1,1 @@
-# OPEN-AI-API
+# OPEN AI-API
