@@ -1,92 +1,130 @@
-// 1 - 1 Modela los mensajes como objetos JS con propiedades autor, contenido y timestamp.
-const mensajeUsuario = {
-    autor: "Usuario",
-    contenido: "Hola Chatcito ¿Cómo estás?",
-    timestamp: "2025-06-25 10:32:12"
-};
-const mensajeIA = {
-    autor: "IA",
-    contenido: "¡Hola! Estoy muy bien, gracias por preguntar 😊, ¿Y tú?",
-    timestamp: "2025-06-25 10:32:17"
-};
+// ===============================
+// Chatbot con API de OpenAI
+// ===============================
 
-// 1 - 2 Crea un historial de conversaciones que sea un array de objetos mensaje.
-const historial = [
-    {
-        autor: "Usuario",
-        contenido: "Hola amiguito ¿Cómo estás?",
-        timestamp: "2025-06-25 10:00:00"
-    },
-    {
-        autor: "IA",
-        contenido: "¡Hola! estoy feliz de saludarte, ¿cómo estás hoy?",
-        timestamp: "2025-06-25 10:00:02"
-    },
-    {
-        autor: "Usuario",
-        contenido: "Estoy entuciasmada, estoy aprendiendo JavaScript",
-        timestamp: "2025-06-25 10:00:30"
-    },
-    {
-        autor: "IA",
-        contenido: "¡Que emoción! Solo dime, estoy listo para ayudarte 💪✨",
-        timestamp: "2025-06-25 10:00:32"
-    },
-]
-// 1 - 3 Crea una función para renderizar los mensajes en el DOM usando .forEach() sobre el array de objetos.
-const chat = document.getElementById("chat"); //Div HTML - contenedor mensajes
+// Historial de mensajes (se guarda aquí cada conversación)
+const historial = [];
 
-//Recorrer los elementos con forEach
-historial.forEach(function (mensaje) {
-
-    console.log("Mensaje procesado:", mensaje); // para ver en consola
-
-    // Crear un div para el mensaje
-    const divMensaje = document.createElement("div");
-
-    // 2. Agregar el contenido
-    divMensaje.innerText = `${mensaje.autor}: ${mensaje.contenido} (${mensaje.timestamp})`;
-
-    // 3. Agregar ese div al contenedor del chat
-    chat.appendChild(divMensaje);
-
-});
-
-//2 - 4 Demuestra un caso de hoisting, usando una función declarada antes de ser definida.
-contarMensajes();
-
-function contarMensajes() {
-    console.log(`Tienes ${historial.length} mensajes en el chat`);
-}
-
-//2 - 5 Crea una función closure que permita contar cuántas preguntas ha hecho el usuario.
+// ===============================
+// Contador de preguntas del usuario (Closure)
+// ===============================
 function contadorPreguntas() {
-    let contador = 0;
-
-    return function () {
-        contador++;
-        return contador;
-    };
-};
+  let contador = 0;
+  return function () {
+    contador++;
+    return contador;
+  };
+}
 const contarPregunta = contadorPreguntas();
 
-//
+// ===============================
+// Obtener elementos del DOM
+// ===============================
+const promptInput = document.querySelector("#prompt");
+const button = document.querySelector("#generate");
+const output = document.querySelector("#output");
 
-//Recorrer los elementos con forEach
-historial.forEach(function (mensaje) {
+// ===============================
+// Renderizar los mensajes en el DOM
+// ===============================
+function renderMensajes() {
+  output.innerHTML = ""; // Limpiar antes de volver a renderizar
 
-    // Crear un div para el mensaje
+  historial.forEach((mensaje) => {
     const divMensaje = document.createElement("div");
+    divMensaje.innerText = mensaje.contenido;
+    divMensaje.classList.add(mensaje.autor === "Usuario" ? "usuario" : "ia");
+    output.appendChild(divMensaje);
+  });
 
-    // 2. Agregar el contenido
-    divMensaje.innerText = `${mensaje.autor}: ${mensaje.contenido} (${mensaje.timestamp})`;
+  // Scroll automático hacia abajo
+  output.scrollTop = output.scrollHeight;
+}
 
-    // 3. Agregar ese div al contenedor del chat
-    chat.appendChild(divMensaje);
+// ===============================
+// Mostrar mensaje de bienvenida
+// ===============================
+function iniciarChat() {
+  const bienvenida = {
+    autor: "IA",
+    contenido: "¡Hola! 👋 Bienvenido al chat. Estoy listo para ayudarte con tus preguntas.",
+    timestamp: new Date().toLocaleString(),
+  };
+  historial.push(bienvenida);
+  renderMensajes();
+}
 
-    if (mensaje.autor === "Usuario") {
-        const totalPreguntas = contarPregunta();
-        console.log("Total de preguntas del usuario hasta ahora:", totalPreguntas);
-    };
+// ===============================
+// Función que llama a la API de OpenAI
+// ===============================
+async function getCompletion(prompt, callback) {
+  const API_KEY = 'Reemplazar'; 
 
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: "Eres un asistente útil." },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.9,
+    }),
+  });
+
+  const data = await res.json();
+  callback(data);
+}
+
+// ===============================
+// Evento al hacer clic en el botón de enviar
+// ===============================
+button.addEventListener("click", () => {
+  const userInput = promptInput.value.trim();
+  if (!userInput) return; // No hacer nada si el campo está vacío
+
+  const timestamp = new Date().toLocaleString();
+
+  // Guardar mensaje del usuario en el historial
+  historial.push({
+    autor: "Usuario",
+    contenido: userInput,
+    timestamp: timestamp,
+  });
+
+  // Contar y mostrar número de preguntas del usuario
+  const total = contarPregunta();
+  console.log("Preguntas del usuario:", total);
+
+  renderMensajes();
+  promptInput.value = "";
+
+  // Llamar a la API de OpenAI
+  getCompletion(userInput, (response) => {
+    try {
+      const mensajeIA = response.choices[0].message.content;
+      const timestampIA = new Date().toLocaleString();
+
+      // Guardar respuesta de la IA en el historial
+      historial.push({
+        autor: "IA",
+        contenido: mensajeIA,
+        timestamp: timestampIA,
+      });
+
+      renderMensajes();
+    } catch (error) {
+      console.error("Error al obtener respuesta:", error);
+      output.innerHTML = "Ocurrió un error. Verifica tu API Key.";
+    }
+  });
 });
+
+// ===============================
+// Inicializar el chat al cargar la página
+// ===============================
+iniciarChat();
