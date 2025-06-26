@@ -100,27 +100,38 @@ button.addEventListener("click", () => {
   const total = contarPregunta();
   console.log("Preguntas del usuario:", total);
 
+  contarPregunta();
   renderMensajes();
   promptInput.value = "";
 
+  const typingDiv = document.getElementById('typing');
+  if (typingDiv) {
+    typingDiv.style.display = "block";
+  } else {
+    console.warn("⚠️ No se encontró el div con id 'typing'");
+  }
+
   // Llamar a la API de OpenAI
   getCompletion(userInput, (response) => {
-    try {
-      const mensajeIA = response.choices[0].message.content;
-      const timestampIA = new Date().toLocaleString();
-
-      // Guardar respuesta de la IA en el historial
-      historial.push({
-        autor: "IA",
-        contenido: mensajeIA,
-        timestamp: timestampIA,
-      });
-
-      renderMensajes();
-    } catch (error) {
-      console.error("Error al obtener respuesta:", error);
-      output.innerHTML = "Ocurrió un error. Verifica tu API Key.";
-    }
+    setTimeout(() => {
+      if (typingDiv) typingDiv.style.display = "none";
+  
+      try {
+        const mensajeIA = response.choices[0].message.content;
+        const timestampIA = new Date().toLocaleString();
+  
+        historial.push({
+          autor: "IA",
+          contenido: mensajeIA,
+          timestamp: timestampIA,
+        });
+  
+        renderMensajes();
+      } catch (error) {
+        console.error("Error al obtener respuesta:", error);
+        output.innerHTML = "Ocurrió un error. Verifica tu API Key.";
+      }
+    }, 600); // <- puedes ajustar el tiempo aquí (en milisegundos)
   });
 });
 
