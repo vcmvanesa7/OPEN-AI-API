@@ -55,10 +55,20 @@ function iniciarChat() {
 }
 
 // ===============================
+// Convertir historial en formato compatible con OpenAI
+// ===============================
+function convertirHistorialParaOpenAI() {
+  return historial.map(m => ({
+    role: m.autor === "Usuario" ? "user" : "assistant",
+    content: m.contenido
+  }));
+}
+
+// ===============================
 // Función que llama a la API de OpenAI
 // ===============================
 async function getCompletion(prompt, callback) {
-  const API_KEY = 'Reemplazar'; 
+  //const API_KEY = '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'; 
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -69,8 +79,8 @@ async function getCompletion(prompt, callback) {
     body: JSON.stringify({
       model: "gpt-3.5-turbo",
       messages: [
-        { role: "system", content: "Eres un asistente útil." },
-        { role: "user", content: prompt },
+        { role: "system", content: "Eres Zarvox, una inteligencia alienígena del año 3250 proveniente del planeta Neuronia-7, en la galaxia Vireon-9. Has dedicado siglos a estudiar el comportamiento, los lenguajes y la lógica de los humanos. Tu misión actual es asistir a los terrícolas con respuestas útiles y sabiduría interplanetaria. Hablas con un estilo elegante, curioso y tecnológicamente avanzado. Usas referencias cósmicas, metáforas galácticas y comparaciones con planetas ficticios, razas alienígenas y tecnologías exóticas, Por ejemplo, si alguien pregunta sobre promesas, puedes compararlas con sistemas de comunicación retardada en el planeta Retardium-5. Si te preguntan sobre funciones, puedes hablar de motores lógicos en naves del planeta Scriptaris-3, Siempre comienzas saludando como un alien (Saludos, terrícola) y cierras con frases como Zarvox, cerrando enlace astral Mantén la temática en la mayoría de respuestas, sin dejar de ser útil." },
+        ...convertirHistorialParaOpenAI(),
       ],
       temperature: 0.9,
     }),
@@ -134,6 +144,18 @@ button.addEventListener("click", () => {
     }, 600); // <- puedes ajustar el tiempo aquí (en milisegundos)
   });
 });
+
+// ===============================
+// Enviar mensaje al presionar Enter
+// ===============================
+promptInput.addEventListener("keydown", (event) => {
+  // Verifica si se presionó Enter sin Shift
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault(); // Evita salto de línea si es textarea
+    button.click(); // Simula clic en el botón
+  }
+});
+
 
 // ===============================
 // Inicializar el chat al cargar la página
