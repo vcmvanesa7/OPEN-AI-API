@@ -2,6 +2,22 @@
 // Chatbot con API de OpenAI
 // ===============================
 
+// ===============================
+// Clase ChatMessage con método formatear
+// ===============================
+class ChatMessage {
+  constructor(autor, contenido, timestamp) {
+    this.autor = autor;
+    this.contenido = contenido;
+    this.timestamp = timestamp;
+  }
+
+  formatear() {
+    return `[${this.timestamp}] ${this.autor}: ${this.contenido}`;
+  }
+}
+
+
 // Historial de mensajes (se guarda aquí cada conversación)
 const historial = [];
 
@@ -68,7 +84,7 @@ function convertirHistorialParaOpenAI() {
 // Función que llama a la API de OpenAI
 // ===============================
 async function getCompletion(prompt, callback) {
-  //const API_KEY = 'remplazar'; 
+  //const API_KEY = 'reemplazar'; 
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -122,28 +138,27 @@ button.addEventListener("click", () => {
   }
 
   // Llamar a la API de OpenAI
-  getCompletion(userInput, (response) => {
+    getCompletion(userInput, (response) => {
     setTimeout(() => {
-      if (typingDiv) typingDiv.style.display = "none";
-  
-      try {
-        const mensajeIA = response.choices[0].message.content;
-        const timestampIA = new Date().toLocaleString();
-  
-        historial.push({
-          autor: "IA",
-          contenido: mensajeIA,
-          timestamp: timestampIA,
-        });
-  
-        renderMensajes();
-      } catch (error) {
-        console.error("Error al obtener respuesta:", error);
-        output.innerHTML = "Ocurrió un error. Verifica tu API Key.";
-      }
-    }, 600); // <- puedes ajustar el tiempo aquí (en milisegundos)
+    if (typingDiv) typingDiv.style.display = "none";
+
+    try {
+      const mensajeIA = response.choices[0].message.content;
+      const timestampIA = new Date().toLocaleString();
+
+      const mensajeIAObj = new ChatMessage("IA", mensajeIA, timestampIA);
+      historial.push(mensajeIAObj);
+      console.log(mensajeIAObj.formatear());
+
+
+      renderMensajes();
+    } catch (error) {
+      console.error("Error al obtener respuesta:", error);
+      output.innerHTML = "Ocurrió un error. Verifica tu API Key.";
+    }
+  }, 600); // <- puedes ajustar el tiempo aquí (en milisegundos)
   });
-});
+  });
 
 // ===============================
 // Enviar mensaje al presionar Enter
@@ -160,4 +175,21 @@ promptInput.addEventListener("keydown", (event) => {
 // ===============================
 // Inicializar el chat al cargar la página
 // ===============================
-iniciarChat();
+
+// ===============================
+// Promesa falsa para simular carga inicial
+// ===============================
+function cargarMensajesAntiguos() {
+  return new Promise((resolve) => {
+    output.innerHTML = "⏳ Cargando mensajes... Actualizando memoria...";
+    setTimeout(() => {
+      output.innerHTML = ""; // Quitar el mensaje de carga
+      resolve(); // Continuar con el chat
+    }, 2000); // Espera de 2 segundos
+  });
+}
+
+// Ejecutar carga simulada y luego iniciar el chat real
+cargarMensajesAntiguos().then(() => {
+  iniciarChat();
+});
