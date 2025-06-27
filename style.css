@@ -41,7 +41,7 @@ h1 {
 }
 
 /* Mensajes */
-.chat-box div {
+.chat-box div, .chat-box-ia {
   max-width: 75%;
   padding: 10px 15px;
   border-radius: 15px;
@@ -49,6 +49,10 @@ h1 {
   line-height: 1.4;
   position: relative;
   word-wrap: break-word;
+}
+
+.chat-box-ia{
+  margin: 10px;
 }
 
 .usuario {
