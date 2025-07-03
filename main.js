@@ -68,7 +68,7 @@ function convertirHistorialParaOpenAI() {
 // Función que llama a la API de OpenAI
 // ===============================
 async function getCompletion(prompt, callback) {
-  //const API_KEY = 'remplazar'; 
+  //const API_KEY = ''; 
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
